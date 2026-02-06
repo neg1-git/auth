@@ -4,9 +4,23 @@ const cors = require('cors');
 const db = require('./db');
 const bcrypt = require('bcrypt');
 const jwtGenerator = require('./utils/jwtGenerator');
+const authorize = require("./middleware/authorization");
 
 app.use(express.json());
 app.use(cors());
+
+app.get('/dashboard',authorize,async(req,res)=>{
+  try {
+    
+    const user=await db.query('select user_name from users where user_id=$1',[req.user]);
+
+    return res.status(200).json({success:true,data:user.rows[0]})
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({success:false,msg:'error'})
+  }
+})
 
 app.post('/auth/register',async(req,res)=>{
 
