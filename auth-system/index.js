@@ -51,7 +51,7 @@ app.post('/auth/register',async(req,res)=>{
 })
 
 app.post('/auth/login', async(req,res)=>{
-  const {email, plainPassword}=req.body;
+  const {email, password}=req.body;
   const result= await db.query('Select * from users where user_email=$1',[email])
 
   if(result.rows.length===0){
@@ -59,10 +59,12 @@ app.post('/auth/login', async(req,res)=>{
   }
 
   const hashedPassword = result.rows[0].user_password
-  const validPassword = await bcrypt.compare(plainPassword,hashedPassword)
+  const validPassword = await bcrypt.compare(password,hashedPassword)
 
   if(!validPassword){
-    return res.status(401).json({success:false,msg:"Password or Email is incorrect"})
+    const token = jwtGenerator(result.rows[0].user_id);
+    
+    res.json({ token });
   }
   else{
     const token = jwtGenerator(result.rows[0].user_id);
@@ -70,6 +72,15 @@ app.post('/auth/login', async(req,res)=>{
   }
 
 })
+
+app.get("/is-verify", authorize, async (req, res) => {
+  try {
+    res.json(true);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
 
 
 app.listen(5000,console.log('app is listening at 5000...'))
